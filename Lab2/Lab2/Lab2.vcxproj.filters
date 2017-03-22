@@ -45,10 +45,13 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
+    <Image Include="Green.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Lab2.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

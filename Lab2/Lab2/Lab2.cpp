@@ -5,20 +5,22 @@
 #include "Lab2.h"
 
 #define MAX_LOADSTRING 100
-#define REC_WID 10    //длина стороны квадрата
+#define REC_WID 50   //длина стороны квадрата
 
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-int coords[4] = { 0, 0, 0, 0 };     //Для сохранение координат текущего квадратика, для его восстагновления и проверки клика мышью
+int coords[4] = { 0, 0, 0, 0 };                 //Для сохранение координат текущего квадратика
+
+RECT rect;                                      // для размеров окна
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -129,7 +131,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	// координаты для сохранения квадратика в данный момент времени и проверки для клика мыши
-	
+
 
 	switch (message)
 	{
@@ -139,9 +141,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Parse the menu selections:
 		switch (wmId)
 		{
-		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
@@ -150,6 +149,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	break;
+	case WM_CREATE:
+		SetTimer(hWnd, 101, 2000, NULL);
+		break;
+	case WM_SIZE:
+		GetClientRect(hWnd, &rect);
+		break;
 	case WM_PAINT:
 	{
 		HDC hDC;
@@ -157,32 +162,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		HBRUSH hOldBrush, hNewBrush;
 
 		hDC = BeginPaint(hWnd, &ps);
+		
+		KillTimer(hWnd, 101);
+		SetTimer(hWnd, 101, 2000, NULL);
 		hNewBrush = CreateSolidBrush(RGB(0, 0, 0));
 		hOldBrush = (HBRUSH)SelectObject(hDC, hNewBrush);
 
-		int r = rand() % 360;
-		int g = rand() % 360;
-		int b = rand() % 360;
+		int r = rand() % 255;
+		int g = rand() % 255;
+		int b = rand() % 255;
 
 		hNewBrush = CreateSolidBrush(RGB(r, g, b));
 		hOldBrush = (HBRUSH)SelectObject(hDC, hNewBrush);
 
 
-		int x = rand() % 580;//лучше сделать остаток от деления на ширину окна, не знаю, как узнать ее
-		int y = rand() % 400;//лучше сделать остаток от деления на длину окна, не знаю, как узнать ее
+		int x = rand() % (rect.right - rect.left - REC_WID);//остаток от деления на ширину окна
+		int y = rand() % (rect.bottom - rect.top - REC_WID);//остаток от деления на длину окна
 
 
 		Rectangle(hDC, x, y, x + REC_WID, y + REC_WID);
-		
 
 		coords[0] = x;
 		coords[1] = y;
 		coords[2] = x + REC_WID;
 		coords[3] = y + REC_WID;
-
-		Sleep(2000);
-		InvalidateRect(hWnd, NULL, TRUE); //чистит экран
-
 
 		SelectObject(hDC, hOldBrush);
 		DeleteObject(hNewBrush);
@@ -190,25 +193,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 
-
+	case WM_TIMER:
+		UpdateWindow(hWnd);
+		InvalidateRect(hWnd, NULL, TRUE);
+		break;
 	case WM_LBUTTONDOWN:      // Left mouse button was clicked   	
 	{
 		int mousex = LOWORD(lParam);
 		int mousey = HIWORD(lParam);
 
-		// если координаты мыши внутри квадрата
-		//оно попадает под условие, но такое впечатление, что тоже ждет еще 2 секунды
+		// если координаты мыши внутри квадрата		
 		if (mousex >= coords[0] && mousex <= coords[2]
 			&& mousey >= coords[1] && mousey <= coords[3])
 		{
-
-			InvalidateRect(hWnd, NULL, FALSE);   // то очистить окно
+			InvalidateRect(hWnd, NULL, TRUE);   // то перерисовать окно
 		}
 	}
-		break;
-
+	break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		KillTimer(hWnd, 101);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -216,22 +220,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		return (INT_PTR)TRUE;
 
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return (INT_PTR)TRUE;
-		}
-		break;
-	}
-	return (INT_PTR)FALSE;
-}

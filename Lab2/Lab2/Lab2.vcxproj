@@ -163,6 +163,7 @@
     <ResourceCompile Include="Lab2.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Green.ico" />
     <Image Include="Lab2.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
