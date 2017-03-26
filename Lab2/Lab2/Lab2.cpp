@@ -179,10 +179,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			int r = rand() % 255;
 			int g = rand() % 255;
 			int b = rand() % 255;
-
-			KillTimer(hWnd, 101);
-			SetTimer(hWnd, 101, 2000, NULL);
-
+			
 			hBrush = (HBRUSH)SelectObject(hDC, CreateSolidBrush(RGB(r, g, b)));
 
 			// the remainder of dividing by the width of the window
@@ -221,6 +218,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (mousex >= coords[0] && mousex <= coords[2]
 			&& mousey >= coords[1] && mousey <= coords[3])
 		{
+			KillTimer(hWnd, 101);
+			SetTimer(hWnd, 101, 2000, NULL);
 			InvalidateRect(hWnd, NULL, TRUE);
 		}
 	}
