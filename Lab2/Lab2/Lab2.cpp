@@ -12,9 +12,14 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-int coords[4] = { 0, 0, 0, 0 };                 //Для сохранение координат текущего квадратика
+int coords[4] = { 0, 0, 0, 0 };                 // to save the position of a current square
+int R, G, B;                                    // to save the color of a current square
+RECT rect;                                      // to save the window size
 
-RECT rect;                                      // для размеров окна
+// For window resizing
+int resizeTime = 0;
+bool isResized = false;
+
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -130,8 +135,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	// координаты для сохранения квадратика в данный момент времени и проверки для клика мыши
-
 
 	switch (message)
 	{
@@ -154,41 +157,53 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_SIZE:
 		GetClientRect(hWnd, &rect);
+		if (resizeTime < 3)
+			resizeTime++;
+		isResized = true;
 		break;
 	case WM_PAINT:
 	{
 		HDC hDC;
 		PAINTSTRUCT ps;
-		HBRUSH hOldBrush, hNewBrush;
+		HBRUSH hBrush;
 
 		hDC = BeginPaint(hWnd, &ps);
-		
-		KillTimer(hWnd, 101);
-		SetTimer(hWnd, 101, 2000, NULL);
-		hNewBrush = CreateSolidBrush(RGB(0, 0, 0));
-		hOldBrush = (HBRUSH)SelectObject(hDC, hNewBrush);
 
-		int r = rand() % 255;
-		int g = rand() % 255;
-		int b = rand() % 255;
+		// if resizing is not at first time
+		if (resizeTime > 1 && isResized) {
+			hBrush = (HBRUSH)SelectObject(hDC, CreateSolidBrush(RGB(R, G, B)));
+			Rectangle(hDC, coords[0], coords[1], coords[2], coords[3]);
+			isResized = false;
+		}
+		else {
+			int r = rand() % 255;
+			int g = rand() % 255;
+			int b = rand() % 255;
 
-		hNewBrush = CreateSolidBrush(RGB(r, g, b));
-		hOldBrush = (HBRUSH)SelectObject(hDC, hNewBrush);
+			KillTimer(hWnd, 101);
+			SetTimer(hWnd, 101, 2000, NULL);
 
+			hBrush = (HBRUSH)SelectObject(hDC, CreateSolidBrush(RGB(r, g, b)));
 
-		int x = rand() % (rect.right - rect.left - REC_WID);//остаток от деления на ширину окна
-		int y = rand() % (rect.bottom - rect.top - REC_WID);//остаток от деления на длину окна
+			// the remainder of dividing by the width of the window
+			int x = rand() % (rect.right - rect.left - REC_WID);
 
+			// the remainder of dividing by the length of the window
+			int y = rand() % (rect.bottom - rect.top - REC_WID); 
 
-		Rectangle(hDC, x, y, x + REC_WID, y + REC_WID);
+			Rectangle(hDC, x, y, x + REC_WID, y + REC_WID);
 
-		coords[0] = x;
-		coords[1] = y;
-		coords[2] = x + REC_WID;
-		coords[3] = y + REC_WID;
+			// saving the inf about current square
+			coords[0] = x;
+			coords[1] = y;
+			coords[2] = x + REC_WID;
+			coords[3] = y + REC_WID;
+			R = r; G = g; B = b;
 
-		SelectObject(hDC, hOldBrush);
-		DeleteObject(hNewBrush);
+			SelectObject(hDC, hBrush);
+			DeleteObject(hBrush);
+		}
+
 		EndPaint(hWnd, &ps);
 	}
 	break;
@@ -202,11 +217,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		int mousex = LOWORD(lParam);
 		int mousey = HIWORD(lParam);
 
-		// если координаты мыши внутри квадрата		
+		// if mouse position is inside the square		
 		if (mousex >= coords[0] && mousex <= coords[2]
 			&& mousey >= coords[1] && mousey <= coords[3])
 		{
-			InvalidateRect(hWnd, NULL, TRUE);   // то перерисовать окно
+			InvalidateRect(hWnd, NULL, TRUE);
 		}
 	}
 	break;
