@@ -5,7 +5,7 @@
 #include "Lab2.h"
 
 #define MAX_LOADSTRING 100
-#define REC_WID 50   //длина стороны квадрата
+#define REC_WID 10   // square side
 
 
 // Global Variables:
